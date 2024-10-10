@@ -1,0 +1,37 @@
+Producto_Tmp1:
+    LOAD
+        PRODUCTO_ID     as ID_Producto,
+        DESCRIPCION     as Descripcion,
+        CATEGORIA		as Categoria,
+        MARCA           as Marca,
+        LINEA           as Subcategoria
+    FROM 
+    [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/IPV_Producto.qvd]
+    (qvd);
+   
+/**************** Transformación ****************/
+NoConcatenate
+Producto_Tmp2:
+    LOAD
+        ID_Producto,
+        Capitalize(Descripcion)     as Descripcion,
+        Capitalize(Categoria)		as Categoria,
+        Capitalize(Marca)           as Marca,
+        Capitalize(Subcategoria)    as Subcategoria
+    Resident Producto_Tmp1;
+    Drop Table Producto_Tmp1;
+
+/*----------*/
+NoConcatenate
+Producto:
+    LOAD Distinct
+        ID_Producto         as SK.Producto,
+        Descripcion         as Producto.Descripcion,
+        Categoria			as Producto.Categoria,
+        Marca               as Producto.Marca,
+        Subcategoria        as Producto.Subcategoria
+    Resident Producto_Tmp2;
+    Drop Table Producto_Tmp2; 
+
+STORE Producto INTO [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Producto.qvd];
+Drop Table Producto;

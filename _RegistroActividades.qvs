@@ -1,0 +1,171 @@
+﻿
+/*-----------------------------------------------------------------------------------------------------------------------------------------------
+Compañia:       Eficacia S.A
+Proceso:        Transformacion Encuestas
+Desarrollador:  Maria de los Ángeles Delgado
+Email:          maria_adelgado@eficacia.com.co
+Fecha:          2023/10/03 (YYYY/MM/DD)
+Estado:         Activo
+-------------------------------------------------------------------------------------------------------------------------------------------------*/
+RegistroActividades_Tmp1:
+    LOAD
+        ID_SUCURSAL                 as IdPuntoVenta,
+        ID_USUARIO                  as IdPersonal,
+        ID_REGISTRO                 as RegistroID,
+        FECHA_VISITA                as _Fecha,
+        PREGUNTA                    as Pregunta,
+        RESPUESTA_1					as Respuesta1,
+        RESPUESTA_2                 as Respuesta2
+    FROM
+    [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/En_RegistroActividades_$(Anno)$(Mes)*.qvd]
+    (qvd);
+
+/**************** Transformación ****************/
+/*----------*/
+Noconcatenate
+RegistroActividades_Tmp2:
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        DATE(left(date(_Fecha,'DD/MM/YYYY'),10),'YYYY/MM/DD')                as Fecha,
+        Pregunta,
+        Respuesta1,
+        Respuesta2,
+        RegistroID
+    Resident RegistroActividades_Tmp1
+    Where
+	     IdPersonal <> '3066';
+    Drop Table RegistroActividades_Tmp1;
+
+
+/*----------*/
+NoConcatenate
+RegistroActividades_Tmp3:
+	 LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta2              as Marcas
+    Resident RegistroActividades_Tmp2
+    Where 
+        Pregunta ='Marcas participantes'
+        	and (Fecha < '2024/04/22'
+        	or (Fecha > '2024/04/22' and Fecha <= '2024/04/27'));
+
+Outer Join(RegistroActividades_Tmp3)
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Marcas
+    Resident RegistroActividades_Tmp2
+    Where 
+        Pregunta ='Marcas participantes'
+        	and Fecha = '2024/04/22';
+
+Outer Join(RegistroActividades_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Marcas
+    Resident RegistroActividades_Tmp2
+    Where 
+        Pregunta ='Marcas participantes SI'
+        and Fecha >= '2024/04/27';
+        
+  
+Outer Join(RegistroActividades_Tmp3)
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta2             as Tipo_Actividad
+    Resident RegistroActividades_Tmp2
+    Where
+        Pregunta = 'Nombre/ tipo de actividad';
+
+Outer Join(RegistroActividades_Tmp3)
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta2              as Dinamica
+    Resident RegistroActividades_Tmp2
+    Where 
+        Pregunta ='Dinamica de la actividad';
+
+Outer Join(RegistroActividades_Tmp3)
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta2              as Desarrollo
+    Resident RegistroActividades_Tmp2
+    Where 
+        Pregunta ='Desarrollo';
+
+Outer Join(RegistroActividades_Tmp3)
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Num#(Respuesta2)                                                                        as Aforo
+    Resident RegistroActividades_Tmp2
+    Where 
+        Pregunta ='Aforo';
+
+Outer Join(RegistroActividades_Tmp3)
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Num#(Respuesta2)                                                                        as Ventas 
+    Resident RegistroActividades_Tmp2
+    Where 
+        Pregunta ='Ventas en unidades';
+
+Outer Join(RegistroActividades_Tmp3)
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        '$(RutaServerUno)'&Date(Fecha,'YYYY')&'/'&Date(Fecha,'MM')&'/'&'2669'&'/'&Respuesta2    as Url_Captura
+    Resident RegistroActividades_Tmp2
+    Where 
+        Pregunta ='Resgistro multimedia/fotografico';
+    Drop Table RegistroActividades_Tmp2;
+   
+/*----------*/
+NoConcatenate
+RegistroActividades:
+    LOAD Distinct
+        IdPuntoVenta&'-'&IdPersonal&'-'&Fecha   as CK.Key1,
+        IdPuntoVenta                            as RegistroActividades.IdPuntoVenta,
+        IdPersonal                              as RegistroActividades.IdPersonal,
+        RegistroID                              as RegistroActividades.RegistroID,
+        Fecha                                   as RegistroActividades.Fecha,
+        Tipo_Actividad                          as RegistroActividades.Tipo_Actividad,
+        Capitalize(Marcas)                      as RegistroActividades.Marcas,
+        Dinamica                                as RegistroActividades.Dinamica,
+        Desarrollo                              as RegistroActividades.Desarrollo,
+        Aforo                                   as RegistroActividades.Aforo,
+        Ventas                                  as RegistroActividades.Ventas,
+        Url_Captura                             as RegistroActividades.Url_Captura
+    Resident RegistroActividades_Tmp3
+    Where
+    	(Ventas >= 0 and Ventas <= 1000) 
+    		and Ventas <> 000999;
+    Drop Table RegistroActividades_Tmp3;
+
+STORE RegistroActividades INTO [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia\CRISTAR/_RegistroActividades_$(Anno)$(Mes).qvd];
+Drop Table RegistroActividades;

@@ -1,0 +1,53 @@
+/*-----------------------------------------------------------------------------------------------------------------------------------------------
+Compañia:       Eficacia S.A 
+Proceso:        Transformacion Precios
+Desarrollador:  William Alejandro Giraldo Zuluaga
+Email:          william_giraldo@eficacia.com.co
+Fecha           2023/07/24 (YYYY/MM/DD)
+-----------------------------------------------------------------------------------------------------------------------------------------------*/
+Precios_Tmp1:
+    LOAD
+        ID_SUCURSAL         as Id_Sucursal,
+        PRECIO              as Valor,
+        ID_SUPERVISOR       as Id_Usuario,
+        FECHA_INICIAL       as _Fecha,
+        ID_PRODUCTO         as IdProducto,
+        PRODUCTO            as Producto
+    FROM [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/Precios_$(Anno)$(Mes)*.qvd]
+    (qvd);
+
+/*---------*/
+NoConcatenate
+Precios_Tmp2:
+    LOAD
+        Id_Sucursal,
+        Num#(Valor)                                                as Valor,
+        Id_Usuario,
+        DATE(left(date(_Fecha,'YYYY-MM-DD'),10),'YYYY/MM/DD')       as Fecha,
+        IdProducto,
+        Capitalize(Producto)                                        as Producto,
+        ApplyMap('Map_Regional',Id_Sucursal,Null()) 				as Regional,
+        ApplyMap('Precios_Sugeridos',IdProducto,Null())				as Precio_Sugerido
+    Resident Precios_Tmp1
+    where 
+        not WildMatch(Num#(Valor), 'No Manejante', 'NP')
+    and Id_Usuario <> '121479';
+    Drop Table Precios_Tmp1;
+
+/*---------*/
+NoConcatenate
+Precios:
+    LOAD Distinct
+        Id_Sucursal&'-'&Id_Usuario&'-'&IdProducto&'-'&Fecha     as CK.Key2,
+        Id_Sucursal			                                    as Precios.Id_Sucursal,
+        Id_Usuario			                                    as Precios.Id_Usuario,
+        IdProducto			                                    as Precios.IdProducto,
+        Producto	                                            as Precios.Producto,
+        Valor					                                as Precios.PrecioCapturado,
+        Fecha					                                as Precios.Fecha,
+        Precio_Sugerido											as Precios.Precio_Sugerido
+    Resident Precios_Tmp2;
+    DROP Table Precios_Tmp2;
+
+STORE Precios INTO [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Precios_$(Anno)$(Mes).qvd];
+Drop Table Precios;

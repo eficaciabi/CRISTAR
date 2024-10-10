@@ -1,0 +1,144 @@
+﻿/*-----------------------------------------------------------------------------------------------------------------------------------------------
+Compañia:       Eficacia S.A 
+Proceso:        Transformacion LinkTable
+Desarrollador:  William Alejandro Giraldo Zuluaga
+Email:          william_giraldo@eficacia.com.co
+Fecha           2023/07/04 (YYYY/MM/DD)
+-----------------------------------------------------------------------------------------------------------------------------------------------*/
+LinkTable_Tmp1:
+    LOAD DISTINCT
+        Actividades.IdPuntoVenta                as LinkTable.IdPuntoVenta,
+        Actividades.IdPersonal                  as LinkTable.IdPersona,
+        Actividades.Fecha                       as LinkTable.Fecha
+    FROM 
+    [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Actividades_$(Anno)$(Mes).qvd]
+    (qvd);
+
+Concatenate
+    LOAD DISTINCT
+        Cobertura.IdPuntoVenta                as LinkTable.IdPuntoVenta,
+        Cobertura.IdPersonal                  as LinkTable.IdPersona,
+        Cobertura.Fecha                       as LinkTable.Fecha
+    FROM 
+    [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Cobertura_$(Anno)$(Mes).qvd]
+    (qvd);
+
+/*Concatenate
+    LOAD DISTINCT
+        Supervisor.IdPuntoVenta                as LinkTable.IdPuntoVenta,
+        Supervisor.IdPersonal                  as LinkTable.IdPersona,
+        Supervisor.Fecha                       as LinkTable.Fecha
+    FROM 
+    [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Supervisor_$(Anno)$(Mes).qvd]
+    (qvd);*/
+
+Concatenate
+    LOAD DISTINCT
+        RegistroActividades.IdPuntoVenta                as LinkTable.IdPuntoVenta,
+        RegistroActividades.IdPersonal                  as LinkTable.IdPersona,
+        RegistroActividades.Fecha                       as LinkTable.Fecha
+    FROM 
+    [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_RegistroActividades_$(Anno)$(Mes).qvd]
+    (qvd);
+
+/*---------*/
+LinkTable_Tmp2:
+    LOAD DISTINCT
+        Precios.Id_Sucursal                      as LinkTable.IdPuntoVenta,
+        Precios.Id_Usuario                       as LinkTable.IdPersona,
+        Precios.IdProducto                       as LinkTable.Id_Producto,
+        Precios.Fecha             	             as LinkTable.Fecha
+    FROM
+    [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Precios_$(Anno)$(Mes).qvd]
+    (qvd); 
+
+Concatenate
+    LOAD DISTINCT
+        Agotados.Id_Sucursal                     as LinkTable.IdPuntoVenta,
+        Agotados.Id_Usuario                      as LinkTable.IdPersona,
+        Agotados.Id_Producto                     as LinkTable.Id_Producto,
+        Agotados.Fecha                           as LinkTable.Fecha
+    FROM
+    [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Agotados_$(Anno)$(Mes).qvd]
+    (qvd); 
+
+/*---------*/
+LinkTable_Tmp3:
+LOAD DISTINCT
+        Supervisor.IdPuntoVenta                as LinkTable.IdPuntoVenta,
+        Supervisor.IdPersonal                  as LinkTable.IdSupervisor,
+        Supervisor.Fecha                       as LinkTable.Fecha
+    FROM 
+    [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Supervisor_$(Anno)$(Mes).qvd]
+    (qvd);
+
+//----------//
+NoConcatenate
+LinkTable_Tmp:
+    Load Distinct
+        LinkTable.IdPuntoVenta,
+        LinkTable.IdPersona,
+        LinkTable.Fecha 
+    Resident LinkTable_Tmp1; 
+    Drop Table LinkTable_Tmp1;
+
+Outer Join (LinkTable_Tmp)
+    Load Distinct
+        LinkTable.IdPuntoVenta,
+        LinkTable.IdPersona,
+        LinkTable.Id_Producto,
+        LinkTable.Fecha
+    Resident LinkTable_Tmp2;
+    Drop Table LinkTable_Tmp2;
+
+Outer Join (LinkTable_Tmp)
+    Load Distinct
+        LinkTable.IdPuntoVenta,
+        LinkTable.IdSupervisor,
+        LinkTable.Fecha
+    Resident LinkTable_Tmp3;
+    Drop Table LinkTable_Tmp3;
+
+/*---------*/
+NoConcatenate
+LinkTable:
+    LOAD Distinct
+        LinkTable.IdPuntoVenta&'-'&LinkTable.IdPersona&'-'&LinkTable.Fecha 		                        as CK.Key1,
+        LinkTable.IdPuntoVenta&'-'&LinkTable.IdPersona&'-'&LinkTable.Id_Producto&'-'&LinkTable.Fecha    as CK.Key2,
+        LinkTable.IdPuntoVenta&'-'&LinkTable.IdSupervisor&'-'&LinkTable.Fecha 		                    as CK.Key3,
+        LinkTable.IdPuntoVenta                                                                          as SK.PuntoVenta,
+        LinkTable.IdPersona                                                                             as SK.Persona,
+        LinkTable.Fecha                                                                                 as SK.Fecha,
+        LinkTable.Id_Producto                                                                           as SK.Producto
+    Resident LinkTable_Tmp;
+   
+STORE LinkTable INTO [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_LinkTable_$(Anno)$(Mes).qvd];
+Drop Table LinkTable;
+
+/*---------*/
+Calendario_Tmp:
+    LOAD DISTINCT
+        LinkTable.Fecha                         as Fecha
+    Resident LinkTable_Tmp
+    Where 
+        not IsNull(LinkTable.Fecha);
+    Drop Table LinkTable_Tmp;
+
+/*---------*/
+NoConcatenate
+Calendario:
+    LOAD
+        Fecha               	                as SK.Fecha,
+        Fecha               	                as Calendario.Fecha,
+        Year(Fecha)&'-'&Num(Month(Fecha),'00') 	as Calendario.Periodo,
+        Year(Fecha)&Num(Month(Fecha),'00') 	    as Calendario.NumPeriodo,
+        Capitalize(Date(Fecha, 'MMMM'))         as Calendario.Mes,
+        Month(Fecha)&'-'&Day(Fecha)			    as Calendario.Diames,
+        Num(Month(Fecha),'00')	                as Calendario.MesNum,
+        Year(Fecha) 			                as Calendario.Año,
+        Week(Fecha)                             as Calendario.Semana
+    Resident Calendario_Tmp;
+    Drop Table Calendario_Tmp;
+
+STORE Calendario INTO [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Calendario_$(Anno)$(Mes).qvd];
+Drop Table Calendario;

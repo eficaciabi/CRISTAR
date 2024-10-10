@@ -1,0 +1,58 @@
+﻿/*-----------------------------------------------------------------------------------------------------------------------------------------------
+Compañia:       Eficacia S.A 
+Proceso:        Transformacion Agotados
+Desarrollador:  Daniel Alejandro Cerquera Castro
+Email:          daniel_cerquera@eficacia.com.co
+Fecha           2023/07/11 (YYYY/MM/DD)
+-----------------------------------------------------------------------------------------------------------------------------------------------*/
+Agotados_Tmp1:
+    LOAD DISTINCT
+        AGOTADO,
+        PRESENTE,
+        NO_MANEJANTE,
+        SUB_CAUSAL_AGOTADO,
+        ID_PRODUCTO,
+        ID_SUCURSAL,
+        ID_USUARIO,
+        FECHA_CAPTURA
+    FROM
+    [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/Agotados_$(Anno)$(Mes)*.qvd]
+    (qvd);
+
+/*---------*/
+NoConcatenate
+Agotados_Tmp2:
+    LOAD
+        AGOTADO,
+        PRESENTE,
+        NO_MANEJANTE,
+        Capitalize(SUB_CAUSAL_AGOTADO)      as SUB_CAUSAL_AGOTADO,
+        ID_PRODUCTO,
+        ID_SUCURSAL,
+        ID_USUARIO,
+        DATE(left(date(FECHA_CAPTURA,'YYYY-MM-DD'),10),'YYYY/MM/DD')    as FECHA
+    Resident Agotados_Tmp1
+    where 
+        ID_USUARIO <> '121479';
+    DROP Table Agotados_Tmp1;
+
+/*---------*/
+NoConcatenate
+Agotados:
+    LOAD
+        ID_SUCURSAL&'-'&ID_USUARIO&'-'&ID_PRODUCTO&'-'&FECHA	    as CK.Key2,
+        AGOTADO														as Agotados.Agotado,
+        PRESENTE													as Agotados.Presente,
+        NO_MANEJANTE												as Agotados.No_Manejante,
+        SUB_CAUSAL_AGOTADO											as Agotados.SubCausal,
+        ID_PRODUCTO													as Agotados.Id_Producto,
+        ID_SUCURSAL													as Agotados.Id_Sucursal,
+        ID_USUARIO													as Agotados.Id_Usuario,
+        FECHA														as Agotados.Fecha,
+        Capitalize(ApplyMap('Map_Categoria', ID_PRODUCTO, Null()))  as Agotados.Categoria,
+        Capitalize(ApplyMap('Map_Subcategoria', ID_PRODUCTO, Null()))   as Agotados.SubCategoria
+    Resident Agotados_Tmp2;
+    DROP Table Agotados_Tmp2; 
+
+STORE Agotados INTO [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia\CRISTAR\_Agotados_$(Anno)$(Mes).qvd];
+Drop Table Agotados; 

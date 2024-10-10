@@ -1,0 +1,47 @@
+/*-----------------------------------------------------------------------------------------------------------------------------------------------
+Compañia:       Eficacia S.A 
+Proceso:        Transformacion Asesor
+Desarrollador:  William Alejandro Giraldo Zuluaga
+Email:          william_giraldo@eficacia.com.co
+Fecha           2023/07/04 (YYYY/MM/DD)
+-----------------------------------------------------------------------------------------------------------------------------------------------*/
+Asesor_Tmp1:
+    LOAD
+        ASESOR_ID       as Id,
+        NOMBRE          as Nombre,
+        APELLIDO        as Apellido,
+        NOMBRE_JEFE     as Nombre_Jefe,
+        ROL_JEFE	    as Rol_Jefe,
+        ROL             as Rol
+    FROM 
+    [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/IPV_Asesor.qvd]
+    (qvd);
+
+/*----------*/
+NoConcatenate
+Asesor_Tmp2:
+    LOAD
+        Id,
+        Capitalize(Nombre&' '&Apellido) 	as NombreCompleto,
+        capitalize(Nombre_Jefe)             as Nombre_Jefe,
+        Rol_Jefe,
+        Rol
+    Resident Asesor_Tmp1
+    Where 
+        Id <> 121479;
+    Drop Table Asesor_Tmp1;
+    
+/*----------*/
+NoConcatenate
+Asesor:
+    LOAD Distinct
+        Id                  as SK.Persona,
+        NombreCompleto	    as Asesor.NombreCompleto,
+        Nombre_Jefe         as Asesor.Nombre_Jefe,
+        Rol_Jefe            as Asesor.Rol_Jefe,
+        Rol                 as Asesor.Rol
+    Resident Asesor_Tmp2;
+    Drop Table Asesor_Tmp2;
+
+STORE Asesor INTO [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/_Asesor.qvd];
+Drop Table Asesor;

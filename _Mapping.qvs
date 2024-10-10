@@ -1,0 +1,81 @@
+Precios_Sugeridos:
+     Mapping
+          LOAD
+               IdProducto, 
+               PVS
+          FROM [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR\Sh_Precio_Sugerido.qvd] 
+          (qvd);
+
+/*---------*/
+Map_Regional:
+    Mapping
+        LOAD
+            PUNTO_VENTA_ID,
+            REGIONAL
+        FROM [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/IPV_PuntoVenta.qvd]
+        (qvd);
+
+/*---------*/
+Mapping
+    Map_Supervisor:
+	    LOAD
+		    NUM#(ID_JEFE)       AS ID_JEFE,
+		    NOMBRE_JEFE
+        FROM
+        [lib://COMP_Stage (eficacia_admin_analitica)\SGI\Colombia\CRISTAR\IPV_Asesor.qvd]
+        (qvd);
+
+/*---------*/
+Mapping
+    Map_FotoActividades:
+    LOAD 
+	    CK.Key1, 
+        Actividades.Url_Captura
+    FROM
+    [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia\CRISTAR\_Actividades_*.qvd]
+    (qvd);
+
+NoConcatenate
+MesLargo:
+    LOAD * Inline [
+        MesCorto  , Mes ,
+        01 , Enero ,  
+        02 , Febrero , 
+        03 , Marzo ,
+        04 , Abril ,
+        05 , Mayo ,
+        06 , Junio ,
+        07 , Julio ,
+        08 , Agosto ,
+        09 , Septiembre ,
+        10 , Octubre ,
+        11 , Noviembre ,
+        12 , Diciembre
+        ];
+
+Mapping        
+Map_Mes:
+	LOAD
+		Mes,
+		MesCorto		
+	Resident MesLargo;
+	Drop Table MesLargo;
+
+/*---------*/
+Map_Subcategoria:
+    Mapping
+        LOAD
+            PRODUCTO_ID,
+            CATEGORIA
+        FROM [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/IPV_Producto.qvd]
+        (qvd);
+
+/*---------*/
+Map_Categoria:
+    Mapping
+        LOAD
+            PRODUCTO_ID,
+            LINEA
+        FROM [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/IPV_Producto.qvd]
+        (qvd);
+

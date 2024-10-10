@@ -1,0 +1,404 @@
+﻿/*-----------------------------------------------------------------------------------------------------------------------------------------------
+Compañia:       Eficacia S.A
+Proceso:        Transformacion Encuestas
+Desarrollador:  Maria de los Ángeles Delgado
+Email:          maria_adelgado@eficacia.com.co
+Fecha:          2023/10/02 (YYYY/MM/DD)
+Estado:         Activo
+-------------------------------------------------------------------------------------------------------------------------------------------------*/
+Supervisor_Tmp1:
+    LOAD
+        ID_SUCURSAL                 as IdPuntoVenta,
+        ID_USUARIO                  as IdPersonal,
+        ID_REGISTRO                 as RegistroID,
+        FECHA_VISITA                as _Fecha,
+        PREGUNTA                    as Pregunta,
+        RESPUESTA_1                 as Respuesta1,
+        RESPUESTA_2                 as Respuesta2
+    FROM
+    [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/En_Supervisor_$(Anno)$(Mes)*.qvd]
+    (qvd);
+
+/**************** Transformación ****************/
+/*----------*/
+Noconcatenate
+Supervisor_Tmp2:
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        DATE(left(date(_Fecha,'DD/MM/YYYY'),10),'YYYY/MM/DD')                as Fecha,
+        Pregunta,
+        Respuesta1,
+        Respuesta2,
+        RegistroID
+    Resident Supervisor_Tmp1
+    Where
+	     IdPersonal <> '3066';
+    Drop Table Supervisor_Tmp1;
+
+/*----------*/
+NoConcatenate
+Supervisor_Tmp3:
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Capitalize(Respuesta1)  as Mercaimpulsador
+    Resident Supervisor_Tmp2
+    Where
+        Pregunta = 'Mercaimpulsador Asignado';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as UniformeCompleto
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Su Uniforme Esta Completo?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as UniformeEstado
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='El Uniforme Esta Limpio Y En Buen Estado (Sin Arrugas- Rotos O Remiendos)';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Peinado
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Su Peinado- Corte- Barba Es Adecuado?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Manos
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Las Uñas Están Maquilladas- Con Un Largo Adecuado Y Organizadas?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Calzado
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='El Calzado Y Sus Complementos (Medias) Cumplen Con El Uniforme?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Vestuario
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Su Presentación Personal Coincide Con El Manual De Vestuario De La Marca?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta2              as ObservacionVestuario
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Observaciones Y Recomendaciones Sobre La Presentación Personal De La Impulsadora.';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Herramientas
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Cuenta con todas las herramientas de trabajo';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta2              as ObservacionImplementos
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Solicitud y Observaciones Implementos de trabajo';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Portafolio
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Conoce El Portafolio Codificado En La Cadena?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Productos
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Conoce Los Diferentes Productos Y Tiene Claras Sus Caracteristicas?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Planometria
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Conoce La Planometria Del Pdv?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as ExhPlanometria
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='La Exhibición Cumple Con La Planometria?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as ExhManual
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Conoce Y Tiene Claro El Manual De Exhibición';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as ExhPrecios
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='La Exhibicion Cuenta Con Precios Actualizados Y Al Dia';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as ExhLimpia
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Las Exhibiciones Estan Limpias Y Ordenadas';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Lineales
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Los Lineales Estan Completamente Surtidos';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Empaques
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Los Empaques Se Encuentran En Buen Estado';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as DescuentosVisibles
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Actividades Y Descuentos Comunicados Y Visibles.';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as AbordaCliente
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Aborda De Una Forma Adecuada Al Cliente?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Asesoria
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Asesora De Una Forma Correcta Los Clientes?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as VentasCruzadas
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Realiza Ventas Cruzadas?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Expresion
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Maneja Una Buena Expresión Verbal Y Corporal';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as Vocabulario
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Maneja Un Vocabulario Adecuado?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta1              as TratoPersonal
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Su Comunicacion Y Trato Al Personal De Tienda Es El Adecuado?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta2              as ArgumentoMarca
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Argumenta Con Claridad El Por Que Elegir La Marca?';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta2              as ObservacionMercaimpulsadora
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Observaciones Del Personal De La Tienda Con Relación A La Mercaimpulsadora';
+
+Left Join (Supervisor_Tmp3) 
+    LOAD
+        IdPuntoVenta,
+        IdPersonal,
+        RegistroID,
+        Fecha,
+        Respuesta2              as Compromisos
+    Resident Supervisor_Tmp2
+    Where 
+        Pregunta ='Acciones Y Compromisos De La Visita';
+    Drop Table Supervisor_Tmp2;
+   
+/*----------*/
+NoConcatenate
+Supervisor:
+    LOAD 
+        IdPuntoVenta&'-'&IdPersonal&'-'&Fecha       as CK.Key3,
+        IdPuntoVenta                                as Supervisor.IdPuntoVenta,
+        IdPersonal                                  as Supervisor.IdPersonal,
+        RegistroID                                  as Supervisor.RegistroID,
+        Fecha                                       as Supervisor.Fecha,
+        Mercaimpulsador                             as Supervisor.Mercaimpulsador,
+        UniformeCompleto                            as Supervisor.UniformeCompleto,
+        UniformeEstado                              as Supervisor.UniformeEstado,
+        Peinado                                     as Supervisor.Peinado,
+        Manos                                       as Supervisor.Manos,
+        Calzado                                     as Supervisor.Calzado,
+        Vestuario                                   as Supervisor.Vestuario,
+        ObservacionVestuario                        as Supervisor.ObservacionVestuario,
+        Herramientas                                as Supervisor.Herramientas,
+        ObservacionImplementos                      as Supervisor.ObservacionImplementos,
+        Portafolio                                  as Supervisor.Portafolio,
+        Productos                                   as Supervisor.Productos,
+        Planometria                                 as Supervisor.Planometria,
+        ExhPlanometria                              as Supervisor.ExhPlanometria,
+        ExhManual                                   as Supervisor.ExhManual,
+        ExhPrecios                                  as Supervisor.ExhPrecios,
+        ExhLimpia                                   as Supervisor.ExhLimpia,
+        Lineales                                    as Supervisor.Lineales,
+        Empaques                                    as Supervisor.Empaques,
+        DescuentosVisibles                          as Supervisor.DescuentosVisibles,
+        AbordaCliente                               as Supervisor.AbordaCliente,
+        Asesoria                                    as Supervisor.Asesoria,
+        VentasCruzadas                              as Supervisor.VentasCruzadas,
+        Expresion                                   as Supervisor.Expresion,
+        Vocabulario                                 as Supervisor.Vocabulario,
+        TratoPersonal                               as Supervisor.TratoPersonal,
+        ArgumentoMarca                              as Supervisor.ArgumentoMarca,
+        ObservacionMercaimpulsadora                 as Supervisor.ObservacionMercaimpulsadora,
+        Compromisos                                 as Supervisor.Compromisos,
+        Capitalize(ApplyMap('Map_Supervisor', IdPersonal, Null()))	as Supervisor.Nombre
+    Resident Supervisor_Tmp3;
+    Drop Table Supervisor_Tmp3;
+
+STORE Supervisor INTO [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia\CRISTAR/_Supervisor_$(Anno)$(Mes).qvd];
+Drop Table Supervisor;

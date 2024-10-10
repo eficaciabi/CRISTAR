@@ -1,0 +1,66 @@
+﻿/*-----------------------------------------------------------------------------------------------------------------------------------------------
+Compañia: 		Eficacia S.A
+Proceso:		Transformacion Actividades
+Desarrollador: 	William Alejandro Giraldo Zuluaga
+Email:			william_giraldo@eficacia.com
+-----------------------------------------------------------------------------------------------------------------------------------------------*/
+Actividades_Tmp1:
+    LOAD 
+        EMPRESA							as Empresa,
+        CATEGORIA						as Categoria,
+        MARCA							as Marca,
+        TIPO_ACTIVIDAD					as TipoActividad,
+        OBSERVACIONES					as Observaciones,
+        SUBTIPO_ACTIVIDAD				as SubActividad,
+        ID_SUCURSAL						as IdPuntoVenta,
+        ID_USUARIO						as IdPersonal,
+        FECHA_VISITA					as _Fecha,
+        ID_REGISTRO						as IDRegistro,
+        NOMBRE_ARCHIVO					as Url_Captura
+  FROM
+  [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/Actividades_$(Anno)$(Mes)*.qvd]
+  (qvd);
+   
+/********************************************************************************/
+/*							Comienzo Transformacion								*/	
+/********************************************************************************/
+NoConcatenate
+Actividades_Tmp2:
+    LOAD 
+        Empresa,
+        Categoria,
+        Capitalize(Marca)																				as Marca,
+        Capitalize(TipoActividad)																		as TipoActividad,
+        Observaciones,
+        Capitalize(SubActividad)																		as SubActividad,
+        IdPuntoVenta,
+        IdPersonal,
+        DATE(left(date(_Fecha,'DD/MM/YYYY'),10),'YYYY/MM/DD')                                           as Fecha,
+        IDRegistro,
+        '$(RutaServerUno)'&Date(_Fecha,'YYYY')&'/'&Date(_Fecha,'MM')&'/'&'2669'&'/'&Url_Captura		    as Url_Captura
+    Resident Actividades_Tmp1
+    Where 
+        Not WildMatch(IdPersonal,'121479');
+    Drop Table Actividades_Tmp1;
+    
+/*---------*/
+NoConcatenate
+Actividades:
+    LOAD Distinct
+        IdPuntoVenta&'-'&IdPersonal&'-'&Fecha	as CK.Key1,
+        Categoria								as Actividades.Categoria,
+        Empresa									as Actividades.Empresa,
+        Marca									as Actividades.Marca,
+        TipoActividad							as Actividades.TipoActividad,
+        Observaciones							as Actividades.Observaciones,
+        SubActividad							as Actividades.SubActividad,
+        IdPuntoVenta							as Actividades.IdPuntoVenta,
+        IdPersonal								as Actividades.IdPersonal,
+        Fecha									as Actividades.Fecha,
+        IDRegistro								as Actividades.IDRegistro,
+        Url_Captura								as Actividades.Url_Captura
+    Resident Actividades_Tmp2;
+    DROP Table Actividades_Tmp2;
+
+STORE Actividades INTO [lib://COMP_DataMart (eficacia_admin_analitica)/SGI/Colombia\CRISTAR\_Actividades_$(Anno)$(Mes).qvd];
+Drop Table Actividades; 

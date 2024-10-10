@@ -1,0 +1,17 @@
+﻿/*-----------------------------------------------------------------------------------------------------------------------------------------------
+Compañia: 		  Eficacia S.A
+Proceso:		    Conversor Cristar QR Sharepoint-QVD
+Desarrollador: 	William Alejandro Giraldo Zuluaga
+Fecha			      2023/08/08 (YYYY/MM/DD)
+-----------------------------------------------------------------------------------------------------------------------------------------------*/
+
+Precios_Sugeridos:
+  LOAD
+    "ID PRODUCTO SGI" as IdProducto,
+    "PPS+IVA"         as PVS
+  FROM [lib://COMP_SharePoint_Internal (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/Mockup - Precios.xlsx]
+  (ooxml, embedded labels, table is Hoja1);
+
+STORE Precios_Sugeridos INTO [lib://COMP_Stage (eficacia_admin_analitica)/SGI/Colombia/CRISTAR/Sh_Precio_Sugerido.qvd] (qvd);
+Drop Table Precios_Sugeridos;
+
